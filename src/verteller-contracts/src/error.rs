@@ -110,6 +110,18 @@ fn is_out_of_memory(message: &str) -> bool {
 /// A `Result` with this crate's [`Error`].
 pub type Result<T> = std::result::Result<T, Error>;
 
+/// The most characters of a refused name an error repeats.
+pub const MAX_ECHO_CHARS: usize = 80;
+
+/// A refused name as an error repeats it: the first [`MAX_ECHO_CHARS`] characters, and `...` when
+/// there were more. A name can be as long as a request, and the error goes back in the answer.
+pub fn echo(text: &str) -> String {
+    match text.char_indices().nth(MAX_ECHO_CHARS) {
+        Some((at, _)) => format!("{}...", &text[..at]),
+        None => text.to_string(),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

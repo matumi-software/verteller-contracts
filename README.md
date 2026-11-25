@@ -9,4 +9,4 @@ depends on the app, and the app never depends on the Pro source. What they both 
 It holds no state and no I/O of its own beyond reading and writing audio files. The job queue, the event bus, accounts,
 the speech models and the server stay in the app and reach the Pro features through the `Host` trait.
 
-MIT licensed. Not published to crates.io yet: depend on it by git tag.
+MIT licensed. Not published to crates.io yet: depend on it by a pinned git commit (`rev`) for now.

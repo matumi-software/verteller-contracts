@@ -8,22 +8,36 @@
 //! - [`split_script`], which cuts a script into pieces a model can read, and [`word_times`].
 //! - [`VoiceProfile`] and [`Consent`]: a voice and the record of whose it is, as plain data.
 //! - [`Synthesizer`]: the trait a speech model implements.
+//! - [`jobs`]: [`Job`] and the types around it, and the [`JobService`]
+//!   trait the app's job queue implements. [`auditions`] has the short readings that go with it.
+//! - [`api::ApiError`], the problem JSON every refusal is, and [`Caller`], who is asking.
+//! - [`claude_desktop`]: the wire types of the Claude Desktop connection.
+//! - [`bridge`]: starting the app, and the address it is found at.
 
+pub mod api;
 pub mod audio;
+pub mod auditions;
+pub mod bridge;
+pub mod caller;
 pub mod cancel;
+pub mod claude_desktop;
 pub mod decode;
 pub mod entitlements;
 pub mod error;
 pub mod ids;
+pub mod jobs;
 pub mod script;
 pub mod voice;
 pub mod word_times;
 
+pub use api::{ApiError, ApiJson, ApiMultipart, ApiQuery, ApiResult};
 pub use audio::Audio;
+pub use caller::Caller;
 pub use cancel::CancelToken;
 pub use decode::{READABLE_FORMATS, decode_file, read_recording};
 pub use entitlements::{Edition, Entitlements, Feature, FreeEntitlements, Tier};
-pub use error::{Error, Result};
+pub use error::{Error, MAX_ECHO_CHARS, Result, echo};
+pub use jobs::{Job, JobService, JobServiceError, now_rfc3339, safe_file_stem};
 pub use script::{MAX_PAUSE_MARKER_MS, MAX_PAUSE_MARKERS_TOTAL_MS, Segment, split_script};
 pub use voice::{
     Consent, Engine, MAX_DISPLAY_NAME_CHARS, MAX_TRANSCRIPT_CHARS, MAX_WORD_CHARS, MAX_WORDS,
@@ -35,6 +49,12 @@ pub use voice::{
 ///
 /// This is the original Chatterbox, which runs through audio.cpp with all its sampling settings.
 pub const DEFAULT_MODEL: &str = "qwen3-tts";
+
+/// The pause after a segment inside a paragraph when nothing says otherwise, in milliseconds.
+pub const DEFAULT_SENTENCE_PAUSE_MS: u32 = 250;
+
+/// The pause after a segment that ends a paragraph when nothing says otherwise, in milliseconds.
+pub const DEFAULT_PARAGRAPH_PAUSE_MS: u32 = 600;
 
 /// The shortest reference recording a profile accepts, in seconds.
 pub const MIN_REFERENCE_SECONDS: f32 = 3.0;

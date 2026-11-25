@@ -12,14 +12,24 @@ default = []
 ts = ["dep:ts-rs"]
 
 [dependencies]
+async-trait = "0.1.92"
+# The problem JSON (`ApiError`) answers as an axum response, and the job service hands out `Bytes`.
+# Only what its extractors and derives need: no router, no server.
+axum = { version = "0.8.9", default-features = false, features = ["json", "query", "multipart", "macros"] }
 hound = "3"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 # Decodes MP3, M4A (AAC), OGG (Vorbis) and FLAC recordings. MPL-2.0, pure Rust. Only the decoders listed.
 symphonia = { version = "0.6.1", default-features = false, features = ["aac", "flac", "id3v1", "id3v2", "isomp4", "mp3", "ogg", "pcm", "vorbis", "wav"] }
 thiserror = "2"
+time = { version = "0.3.55", features = ["formatting"] }
+tracing = "0.1.44"
 uuid = { version = "1.29.2", features = ["v4"] }
 ts-rs = { version = "12.0.1", default-features = false, features = ["serde-compat", "no-serde-warnings"], optional = true }
+
+# `bridge::SpawnSelf` starts the app detached from the console it was asked from.
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61.2", features = ["Win32_Foundation", "Win32_System_Console"] }
 
 [dev-dependencies]
 tempfile = "3"
