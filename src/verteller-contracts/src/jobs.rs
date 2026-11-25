@@ -642,6 +642,35 @@ pub struct WarmState {
     pub unloading: Option<String>,
 }
 
+/// The job `id` when it is stored under `owner`, else `job_not_found`. Every route that takes a
+/// job id asks this first.
+pub async fn owned_job(
+    jobs: &dyn JobService,
+    id: &str,
+    owner: Option<&str>,
+) -> Result<Job, JobServiceError> {
+    let job = jobs.get(id).await?;
+    if job.owner.as_deref() == owner {
+        Ok(job)
+    } else {
+        Err(JobServiceError::JobNotFound)
+    }
+}
+
+/// The job `id` when it is stored under `owner`, with the path of its joined WAV. This is the one
+/// file `GET /jobs/{id}/output.wav` serves and the MCP voiceover tool and resources read, and the
+/// path comes from the queue, never from the caller. `job_not_found` for someone else's job,
+/// `job_not_done` before it is done.
+pub async fn owned_output(
+    jobs: &dyn JobService,
+    id: &str,
+    owner: Option<&str>,
+) -> Result<(Job, PathBuf), JobServiceError> {
+    let job = owned_job(jobs, id, owner).await?;
+    let path = jobs.output_path(id).await?;
+    Ok((job, path))
+}
+
 /// The current time as RFC 3339, for `createdAt` and friends.
 pub fn now_rfc3339() -> String {
     time::OffsetDateTime::now_utc()

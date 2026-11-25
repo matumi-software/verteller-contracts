@@ -13,6 +13,13 @@
 //! - [`api::ApiError`], the problem JSON every refusal is, and [`Caller`], who is asking.
 //! - [`claude_desktop`]: the wire types of the Claude Desktop connection.
 //! - [`bridge`]: starting the app, and the address it is found at.
+//! - [`host`]: the [`Host`] trait, everything the app gives a Pro feature. [`events`] is the live
+//!   push ([`EventSink`]), [`transcribe`] speech to text ([`Transcribe`]) and [`models`] what a
+//!   feature may know of a speech model.
+//! - [`extensions`]: the hooks a Pro build plugs in ([`Extensions`]) and what a build gives the
+//!   app ([`Addons`]). A route hook gets an `Arc<dyn Host>` and answers a `Router<()>`.
+//! - `testing` (the `testing` feature): a `testing::FakeHost`, so a Pro feature's unit
+//!   tests do not need the app.
 
 pub mod api;
 pub mod audio;
@@ -24,9 +31,16 @@ pub mod claude_desktop;
 pub mod decode;
 pub mod entitlements;
 pub mod error;
+pub mod events;
+pub mod extensions;
+pub mod host;
 pub mod ids;
 pub mod jobs;
+pub mod models;
 pub mod script;
+#[cfg(feature = "testing")]
+pub mod testing;
+pub mod transcribe;
 pub mod voice;
 pub mod word_times;
 
@@ -37,8 +51,13 @@ pub use cancel::CancelToken;
 pub use decode::{READABLE_FORMATS, decode_file, read_recording};
 pub use entitlements::{Edition, Entitlements, Feature, FreeEntitlements, Tier};
 pub use error::{Error, MAX_ECHO_CHARS, Result, echo};
+pub use events::{EventSink, EventSinkExt};
+pub use extensions::{Addons, Extensions};
+pub use host::{Host, VoiceImport, WriteGuard};
 pub use jobs::{Job, JobService, JobServiceError, now_rfc3339, safe_file_stem};
+pub use models::ModelInfo;
 pub use script::{MAX_PAUSE_MARKER_MS, MAX_PAUSE_MARKERS_TOTAL_MS, Segment, split_script};
+pub use transcribe::{Transcribe, TranscribeError};
 pub use voice::{
     Consent, Engine, MAX_DISPLAY_NAME_CHARS, MAX_TRANSCRIPT_CHARS, MAX_WORD_CHARS, MAX_WORDS,
     VoiceCleanup, VoiceProfile, Word, keep_private, read_profile, write_profile,

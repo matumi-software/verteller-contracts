@@ -118,6 +118,17 @@ pub struct Endpoint {
     pub token: String,
 }
 
+/// Finds the running app, and starts it when it is not running. The `verteller mcp` stdio bridge
+/// runs as a process of its own before any server exists, so the app hands the Pro build this
+/// instead of the data folder and a launcher: the Pro side never reads the data folder or starts
+/// the app itself.
+#[async_trait::async_trait]
+pub trait EndpointLocator: Send + Sync {
+    /// The app's address and token. When the app does not answer, starts it and waits for it, so
+    /// this can take a while. The text of an error is the sentence for the person.
+    async fn locate(&self) -> Result<Endpoint, String>;
+}
+
 #[cfg(all(test, windows))]
 mod tests {
     use super::*;
