@@ -10,6 +10,8 @@ repository.workspace = true
 default = []
 # TypeScript declarations for the wire types, which the app turns into the UI's API types.
 ts = ["dep:ts-rs"]
+# `testing::FakeHost`, a stand-in for the app's `Host` for the unit tests of a Pro feature.
+testing = ["dep:tempfile"]
 
 [dependencies]
 async-trait = "0.1.92"
@@ -21,8 +23,11 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 # Decodes MP3, M4A (AAC), OGG (Vorbis) and FLAC recordings. MPL-2.0, pure Rust. Only the decoders listed.
 symphonia = { version = "0.6.1", default-features = false, features = ["aac", "flac", "id3v1", "id3v2", "isomp4", "mp3", "ogg", "pcm", "vorbis", "wav"] }
+tempfile = { version = "3", optional = true }
 thiserror = "2"
 time = { version = "0.3.55", features = ["formatting"] }
+# Only the broadcast channel a live event stream is read from, and the lock `Host::writing_for` hands out.
+tokio = { version = "1.54.1", default-features = false, features = ["sync"] }
 tracing = "0.1.44"
 uuid = { version = "1.29.2", features = ["v4"] }
 ts-rs = { version = "12.0.1", default-features = false, features = ["serde-compat", "no-serde-warnings"], optional = true }
@@ -33,3 +38,4 @@ windows-sys = { version = "0.61.2", features = ["Win32_Foundation", "Win32_Syste
 
 [dev-dependencies]
 tempfile = "3"
+tokio = { version = "1.54.1", features = ["rt", "macros"] }
