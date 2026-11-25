@@ -500,14 +500,18 @@ mod tests {
         assert_eq!(a.collapse_stalls(10_000), a);
     }
 
-    /// The four voiceovers of the issue #75 hand test, read from `VERTELLER_ISSUE75_DIR` or the
-    /// folder the hand test left them in. Each is a whole voiceover (its parts joined with the
+    /// The four voiceovers of the issue #75 hand test, read from the folder `VERTELLER_ISSUE75_DIR`
+    /// names. Skipped when the variable is not set. Each is a whole voiceover (its parts joined with the
     /// app's pauses) from before the dead air was cut, so the check runs over the whole file.
     #[test]
     fn the_issue_75_voiceovers() {
-        let dir = std::env::var_os("VERTELLER_ISSUE75_DIR")
-            .map(std::path::PathBuf::from)
-            .unwrap_or_else(|| std::path::PathBuf::from(r"D:\testing\verteller\final2"));
+        let Some(dir) = std::env::var_os("VERTELLER_ISSUE75_DIR").map(std::path::PathBuf::from)
+        else {
+            eprintln!(
+                "skipped: set VERTELLER_ISSUE75_DIR to the folder of the issue #75 voiceovers"
+            );
+            return;
+        };
         let path = |name: &str| dir.join(name);
         let names = [
             "voiceover-original-cuda.wav",
@@ -517,7 +521,7 @@ mod tests {
         ];
         if names.iter().any(|n| !path(n).is_file()) {
             eprintln!(
-                "skipped: the issue #75 voiceovers are not in {} (set VERTELLER_ISSUE75_DIR)",
+                "skipped: the issue #75 voiceovers are not in {}",
                 dir.display()
             );
             return;
