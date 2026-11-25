@@ -1,0 +1,9 @@
+[package]
+name = "verteller-contracts"
+description = "The shared contracts of Verteller: the types, traits and pure code its open app and its Pro features both build on"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
