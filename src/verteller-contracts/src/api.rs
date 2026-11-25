@@ -1,5 +1,6 @@
 //! Problem JSON errors, with the codes from `docs/api.md`.
 
+use crate::jobs::JobServiceError;
 use axum::{
     Json,
     extract::multipart::MultipartRejection,
@@ -319,6 +320,39 @@ impl From<crate::Error> for ApiError {
     }
 }
 
+impl From<JobServiceError> for ApiError {
+    fn from(e: JobServiceError) -> Self {
+        let detail = e.to_string();
+        let (status, code) = match e {
+            JobServiceError::ModelNotReady => (StatusCode::CONFLICT, "model_not_ready"),
+            JobServiceError::ScriptEmpty => (StatusCode::BAD_REQUEST, "script_empty"),
+            JobServiceError::InvalidScript(_) => (StatusCode::BAD_REQUEST, "invalid_script"),
+            JobServiceError::ScriptTooLarge(_) => (StatusCode::BAD_REQUEST, "script_too_large"),
+            JobServiceError::NeedsPro(_) => (StatusCode::PAYMENT_REQUIRED, "needs_pro"),
+            JobServiceError::InvalidPause(_) => (StatusCode::BAD_REQUEST, "invalid_pause"),
+            JobServiceError::InvalidTag(_) => (StatusCode::BAD_REQUEST, "invalid_tag"),
+            JobServiceError::InvalidTitle(_) => (StatusCode::BAD_REQUEST, "invalid_title"),
+            JobServiceError::JobNotFound => (StatusCode::NOT_FOUND, "job_not_found"),
+            JobServiceError::DraftNotFound => (StatusCode::NOT_FOUND, "draft_not_found"),
+            JobServiceError::DraftBusy => (StatusCode::CONFLICT, "draft_busy"),
+            JobServiceError::DraftNotTried => (StatusCode::CONFLICT, "draft_not_tried"),
+            JobServiceError::DraftOutOfDate => (StatusCode::CONFLICT, "draft_out_of_date"),
+            JobServiceError::JobFinished => (StatusCode::CONFLICT, "job_finished"),
+            JobServiceError::JobRunning => (StatusCode::CONFLICT, "job_running"),
+            JobServiceError::JobNotDone => (StatusCode::CONFLICT, "job_not_done"),
+            JobServiceError::SegmentNotFound => (StatusCode::NOT_FOUND, "segment_not_found"),
+            JobServiceError::AuditionNotFound => (StatusCode::NOT_FOUND, "audition_not_found"),
+            JobServiceError::AuditionNotReady => (StatusCode::CONFLICT, "audition_not_ready"),
+            JobServiceError::AuditionTooLarge(_) => (StatusCode::BAD_REQUEST, "audition_too_large"),
+            JobServiceError::Internal(_) => {
+                tracing::error!("{detail}");
+                (StatusCode::INTERNAL_SERVER_ERROR, "internal_error")
+            }
+        };
+        Self::new(status, code, detail)
+    }
+}
+
 impl From<JsonRejection> for ApiError {
     fn from(r: JsonRejection) -> Self {
         if r.status() == StatusCode::PAYLOAD_TOO_LARGE {
@@ -389,5 +423,27 @@ mod tests {
         let oom = ApiError::from(crate::Error::OutOfMemory("out of memory".into()));
         assert_eq!(oom.status, StatusCode::INTERNAL_SERVER_ERROR);
         assert_eq!(oom.code, "gpu_out_of_memory");
+    }
+
+    #[test]
+    fn a_job_service_error_has_the_code_of_its_problem() {
+        use JobServiceError as J;
+        for (error, status, code) in [
+            (J::ModelNotReady, StatusCode::CONFLICT, "model_not_ready"),
+            (
+                J::NeedsPro("x".into()),
+                StatusCode::PAYMENT_REQUIRED,
+                "needs_pro",
+            ),
+            (J::JobNotFound, StatusCode::NOT_FOUND, "job_not_found"),
+            (
+                J::Internal("x".into()),
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "internal_error",
+            ),
+        ] {
+            let api = ApiError::from(error);
+            assert_eq!((api.status, api.code), (status, code));
+        }
     }
 }
