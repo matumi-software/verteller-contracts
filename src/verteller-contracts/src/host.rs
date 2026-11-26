@@ -10,7 +10,8 @@
 
 use crate::{
     ApiError, Caller, Consent, Edition, Feature, VoiceCleanup, VoiceProfile, Word,
-    events::EventSink, jobs::JobService, models, models::ModelInfo, transcribe::Transcribe,
+    events::EventSink, jobs::JobService, models, models::ModelInfo, music::MakeMusic,
+    transcribe::Transcribe,
 };
 use async_trait::async_trait;
 use std::{any::Any, collections::BTreeMap, path::PathBuf, sync::Arc};
@@ -81,6 +82,13 @@ pub trait Host: Send + Sync + 'static {
 
     /// Speech to text and the forced aligner. Plain audio in, words out.
     fn transcriber(&self) -> Arc<dyn Transcribe>;
+
+    /// Making music. A prompt (and a style clip) in, stereo audio out.
+    fn music(&self) -> Arc<dyn MakeMusic>;
+
+    /// The folder Playlist keeps its tracks and styles in, one sub-folder for each person. The app
+    /// makes it and removes a person's folder with the person.
+    fn playlist_folder(&self) -> PathBuf;
 
     /// The app's scratch folder, for the files of a request in flight. It is made when the app
     /// starts and cleaned at start.

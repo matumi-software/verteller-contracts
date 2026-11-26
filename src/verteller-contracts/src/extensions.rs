@@ -134,6 +134,20 @@ pub trait PackagesExtension: Send + Sync {
     fn routes(&self, host: Arc<dyn Host>) -> axum::Router<()>;
 }
 
+/// Playlist: music tracks made on this computer, with the styles they are made in (#309). The track
+/// store, the styles, the generation and the routes are Pro's: the open program holds this hook, the
+/// music model ([`Host::music`]) and the folder the tracks live in ([`Host::playlist_folder`]).
+pub trait PlaylistExtension: Send + Sync {
+    /// A short name for the logs.
+    fn name(&self) -> &'static str;
+
+    /// The routes it adds, under `/api/v1/playlist`. They are merged into the app's router before the
+    /// guards, so they are guarded like every other route. Each asks `Host::require(Feature::Playlist)`
+    /// first and keeps a track and a style to the person who made it. The router has its state
+    /// applied.
+    fn routes(&self, host: Arc<dyn Host>) -> axum::Router<()>;
+}
+
 /// The Pro pieces that are present in this build. Cheap to clone.
 #[derive(Clone, Default)]
 pub struct Extensions {
@@ -143,6 +157,7 @@ pub struct Extensions {
     pub mcp: Option<Arc<dyn McpExtension>>,
     pub projects: Option<Arc<dyn ProjectsExtension>>,
     pub packages: Option<Arc<dyn PackagesExtension>>,
+    pub playlist: Option<Arc<dyn PlaylistExtension>>,
 }
 
 impl Extensions {
@@ -159,6 +174,7 @@ impl Extensions {
             || self.mcp.is_some()
             || self.projects.is_some()
             || self.packages.is_some()
+            || self.playlist.is_some()
     }
 }
 
@@ -171,6 +187,7 @@ impl std::fmt::Debug for Extensions {
             .field("mcp", &self.mcp.is_some())
             .field("projects", &self.projects.is_some())
             .field("packages", &self.packages.is_some())
+            .field("playlist", &self.playlist.is_some())
             .finish()
     }
 }
@@ -244,6 +261,27 @@ mod tests {
         assert!(e.any());
         assert_eq!(e.packages.as_ref().unwrap().name(), "packages");
         assert!(Extensions::none().packages.is_none());
+    }
+
+    struct Playlist;
+    impl PlaylistExtension for Playlist {
+        fn name(&self) -> &'static str {
+            "playlist"
+        }
+        fn routes(&self, _: Arc<dyn Host>) -> axum::Router<()> {
+            axum::Router::new()
+        }
+    }
+
+    #[test]
+    fn the_playlist_hook_counts_as_a_pro_piece_and_a_free_build_has_none() {
+        let e = Extensions {
+            playlist: Some(Arc::new(Playlist)),
+            ..Extensions::none()
+        };
+        assert!(e.any());
+        assert_eq!(e.playlist.as_ref().unwrap().name(), "playlist");
+        assert!(Extensions::none().playlist.is_none());
     }
 
     #[test]

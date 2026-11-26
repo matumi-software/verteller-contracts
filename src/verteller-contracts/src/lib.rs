@@ -16,6 +16,7 @@
 //! - [`host`]: the [`Host`] trait, everything the app gives a Pro feature. [`events`] is the live
 //!   push ([`EventSink`]), [`transcribe`] speech to text ([`Transcribe`]) and [`models`] what a
 //!   feature may know of a speech model.
+//! - [`music`]: making music ([`MakeMusic`]), which Playlist uses.
 //! - [`extensions`]: the hooks a Pro build plugs in ([`Extensions`]) and what a build gives the
 //!   app ([`Addons`]). A route hook gets an `Arc<dyn Host>` and answers a `Router<()>`.
 //! - `testing` (the `testing` feature): a `testing::FakeHost`, so a Pro feature's unit
@@ -37,6 +38,7 @@ pub mod host;
 pub mod ids;
 pub mod jobs;
 pub mod models;
+pub mod music;
 pub mod script;
 #[cfg(feature = "testing")]
 pub mod testing;
@@ -56,6 +58,7 @@ pub use extensions::{Addons, Extensions};
 pub use host::{Host, VoiceImport, WriteGuard};
 pub use jobs::{Job, JobService, JobServiceError, now_rfc3339, safe_file_stem};
 pub use models::ModelInfo;
+pub use music::{MakeMusic, Music, MusicError, MusicRequest};
 pub use script::{MAX_PAUSE_MARKER_MS, MAX_PAUSE_MARKERS_TOTAL_MS, Segment, split_script};
 pub use transcribe::{Transcribe, TranscribeError};
 pub use voice::{
