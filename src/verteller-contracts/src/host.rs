@@ -86,8 +86,9 @@ pub trait Host: Send + Sync + 'static {
     /// Making music. A prompt (and a style clip) in, stereo audio out.
     fn music(&self) -> Arc<dyn MakeMusic>;
 
-    /// The folder Playlist keeps its tracks and styles in, one sub-folder for each person. The app
-    /// makes it and removes a person's folder with the person.
+    /// The folder Playlist keeps its tracks and styles in. The app names it and counts it among its own
+    /// folders; Playlist makes it when the first track is, lays it out and keeps who made each track
+    /// (as the editor does for its projects). The app does not remove a person's tracks with the person.
     fn playlist_folder(&self) -> PathBuf;
 
     /// The app's scratch folder, for the files of a request in flight. It is made when the app
