@@ -12,6 +12,7 @@ use crate::{
     ids,
     jobs::{Job, JobService, JobServiceError},
     models::ModelInfo,
+    music::{MakeMusic, Music, MusicError, MusicRequest},
     transcribe::{Transcribe, TranscribeError, Transcript},
 };
 use async_trait::async_trait;
@@ -190,6 +191,24 @@ impl Transcribe for NoTranscriber {
     }
 }
 
+/// A music service with no model: nothing is ready and every request answers why.
+pub struct NoMusic;
+
+#[async_trait]
+impl MakeMusic for NoMusic {
+    fn ready(&self) -> bool {
+        false
+    }
+
+    async fn make(
+        &self,
+        _request: MusicRequest,
+        _cancel: crate::CancelToken,
+    ) -> Result<Music, MusicError> {
+        Err(MusicError::NotReady)
+    }
+}
+
 /// The app, in memory. Every field is public so a test sets what it needs; `new` is a free
 /// edition, no model, no voice and a speech to text service that is not ready.
 pub struct FakeHost {
@@ -201,6 +220,8 @@ pub struct FakeHost {
     pub events: Arc<RecordingEvents>,
     /// Speech to text. [`NoTranscriber`] by default.
     pub transcriber: Arc<dyn Transcribe>,
+    /// Making music. [`NoMusic`] by default.
+    pub music: Arc<dyn MakeMusic>,
     /// The speech models the host knows.
     pub models: Vec<ModelInfo>,
     /// The `Host` header values this listener answers to.
@@ -230,6 +251,7 @@ impl FakeHost {
             jobs: Arc::default(),
             events: Arc::default(),
             transcriber: Arc::new(NoTranscriber),
+            music: Arc::new(NoMusic),
             models: Vec::new(),
             allowed_hosts: vec!["127.0.0.1".into(), "localhost".into()],
             owner_user_name: "owner".into(),
@@ -283,6 +305,14 @@ impl Host for FakeHost {
 
     fn transcriber(&self) -> Arc<dyn Transcribe> {
         self.transcriber.clone()
+    }
+
+    fn music(&self) -> Arc<dyn MakeMusic> {
+        self.music.clone()
+    }
+
+    fn playlist_folder(&self) -> PathBuf {
+        self.tmp.path().join("playlist")
     }
 
     fn tmp_dir(&self) -> PathBuf {
@@ -537,6 +567,30 @@ mod tests {
         assert!(host.gate.try_write().is_err());
         drop(guard);
         assert!(host.gate.try_write().is_ok());
+    }
+
+    #[tokio::test]
+    async fn music_is_not_ready_until_a_test_says_so_and_playlist_has_a_folder_of_its_own() {
+        let host = FakeHost::new();
+        let m = host.music();
+        assert!(!m.ready());
+        let e = m
+            .make(
+                MusicRequest {
+                    prompt: "calm".into(),
+                    style: None,
+                    seconds: 10.0,
+                    seed: 1,
+                    settings: Default::default(),
+                    model: None,
+                },
+                crate::CancelToken::new(),
+            )
+            .await
+            .unwrap_err();
+        assert_eq!(e, MusicError::NotReady);
+        assert!(host.playlist_folder().starts_with(host.tmp_dir()));
+        assert_ne!(host.playlist_folder(), host.output_folder());
     }
 
     #[tokio::test]

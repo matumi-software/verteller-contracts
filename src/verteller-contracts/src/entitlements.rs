@@ -28,6 +28,8 @@ pub mod name {
     pub const EDITOR: &str = "editor";
     /// A switch: voice export and import as a protected package file.
     pub const PACKAGES: &str = "packages";
+    /// A switch: Playlist, music tracks made on this computer.
+    pub const PLAYLIST: &str = "playlist";
 }
 
 /// The longest voiceover segment a free build takes, in seconds, for every model.
@@ -81,6 +83,7 @@ pub enum Feature {
     Mcp,
     Editor,
     Packages,
+    Playlist,
 }
 
 impl Feature {
@@ -93,6 +96,7 @@ impl Feature {
             Self::Mcp => name::MCP,
             Self::Editor => name::EDITOR,
             Self::Packages => name::PACKAGES,
+            Self::Playlist => name::PLAYLIST,
         }
     }
 
@@ -105,6 +109,7 @@ impl Feature {
             Self::Mcp => "Claude Desktop and MCP",
             Self::Editor => "The voiceover editor",
             Self::Packages => "Voice export and import",
+            Self::Playlist => "Playlist",
         }
     }
 }
@@ -171,6 +176,7 @@ mod tests {
             Feature::Mcp,
             Feature::Editor,
             Feature::Packages,
+            Feature::Playlist,
         ] {
             assert!(!e.allows(f), "{f:?}");
         }
@@ -213,6 +219,7 @@ mod tests {
             Feature::Mcp,
             Feature::Editor,
             Feature::Packages,
+            Feature::Playlist,
         ]
         .iter()
         .map(|f| f.entitlement())
