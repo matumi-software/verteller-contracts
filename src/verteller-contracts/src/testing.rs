@@ -385,6 +385,7 @@ impl Host for FakeHost {
                 model: v.model.clone(),
                 settings: v.settings.clone(),
                 sample_seconds: v.sample_seconds,
+                sample_source: v.sample_source,
                 words: v.words.clone(),
                 last_used_at: None,
             };
@@ -424,6 +425,7 @@ mod tests {
             model: "m".into(),
             settings: Default::default(),
             sample_seconds: None,
+            sample_source: Default::default(),
             transcript: None,
             words: Vec::new(),
             cleanup: None,

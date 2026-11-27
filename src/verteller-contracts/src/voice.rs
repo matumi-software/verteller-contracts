@@ -110,6 +110,26 @@ pub struct VoiceCleanup {
     pub engine: Engine,
 }
 
+/// What a voice's sample reads: the text the app ships, or the voice's own transcript.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
+#[serde(rename_all = "camelCase")]
+pub enum SampleSource {
+    /// The short text the app ships. What a voice with no choice stored reads.
+    #[default]
+    Default,
+    /// The voice's transcript, cut to a short sample when it is read. A voice with no transcript
+    /// reads the default text instead.
+    Transcript,
+}
+
+impl SampleSource {
+    /// Whether this is the default, which `profile.json` leaves out.
+    pub fn is_default(&self) -> bool {
+        *self == SampleSource::Default
+    }
+}
+
 /// A stored voice.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct VoiceProfile {
@@ -146,6 +166,9 @@ pub struct VoiceProfile {
     /// there is none. A recording shorter than this is used whole.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sample_seconds: Option<f32>,
+    /// What the voice's sample reads. Voices stored before there was a choice read the default text.
+    #[serde(default, skip_serializing_if = "SampleSource::is_default")]
+    pub sample_source: SampleSource,
     /// Words the model should be given written another way, applied to the script right before it is
     /// read ([`VoiceProfile::spoken_text`]).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -399,6 +422,7 @@ mod tests {
             model: DEFAULT_MODEL.into(),
             settings: Default::default(),
             sample_seconds: None,
+            sample_source: Default::default(),
             words: Vec::new(),
             last_used_at: None,
             dir: dir.to_path_buf(),
@@ -458,6 +482,26 @@ mod tests {
         assert_eq!(v.shown_name(), "a");
         v.display_name = Some("Office mic".into());
         assert_eq!(v.shown_name(), "Office mic");
+    }
+
+    #[test]
+    fn the_sample_source_is_left_out_when_it_is_the_default_and_kept_otherwise() {
+        let tmp = tempfile::tempdir().unwrap();
+        let dir = tmp.path().join("a");
+        fs::create_dir(&dir).unwrap();
+        let mut v = voice(&dir);
+        write_profile(&v).unwrap();
+        let text = fs::read_to_string(dir.join("profile.json")).unwrap();
+        assert!(!text.contains("sample_source"));
+        assert_eq!(
+            read_profile(&dir).unwrap().sample_source,
+            SampleSource::Default
+        );
+        v.sample_source = SampleSource::Transcript;
+        write_profile(&v).unwrap();
+        let text = fs::read_to_string(dir.join("profile.json")).unwrap();
+        assert!(text.contains(r#""sample_source": "transcript""#), "{text}");
+        assert_eq!(read_profile(&dir).unwrap(), v);
     }
 
     #[test]
