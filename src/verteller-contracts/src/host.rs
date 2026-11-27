@@ -46,6 +46,8 @@ pub struct VoiceImport {
     pub settings: BTreeMap<String, f64>,
     /// How much of the recording the model uses.
     pub sample_seconds: Option<f32>,
+    /// What the sample reads.
+    pub sample_source: crate::SampleSource,
     /// What the recording says.
     pub transcript: Option<String>,
     /// Words the model is given written another way.

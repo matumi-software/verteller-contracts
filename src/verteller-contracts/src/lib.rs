@@ -63,7 +63,7 @@ pub use script::{MAX_PAUSE_MARKER_MS, MAX_PAUSE_MARKERS_TOTAL_MS, Segment, split
 pub use transcribe::{Transcribe, TranscribeError};
 pub use voice::{
     Consent, Engine, MAX_DISPLAY_NAME_CHARS, MAX_TRANSCRIPT_CHARS, MAX_WORD_CHARS, MAX_WORDS,
-    VoiceCleanup, VoiceProfile, Word, keep_private, read_profile, write_profile,
+    SampleSource, VoiceCleanup, VoiceProfile, Word, keep_private, read_profile, write_profile,
 };
 
 /// The model a voice has when nothing else was chosen, and the one every voice stored without a
