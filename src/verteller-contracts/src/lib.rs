@@ -58,7 +58,7 @@ pub use extensions::{Addons, Extensions};
 pub use host::{Host, VoiceImport, WriteGuard};
 pub use jobs::{Job, JobService, JobServiceError, now_rfc3339, safe_file_stem};
 pub use models::ModelInfo;
-pub use music::{MakeMusic, Music, MusicError, MusicRequest};
+pub use music::{MakeMusic, Music, MusicError, MusicModelInfo, MusicRequest};
 pub use script::{MAX_PAUSE_MARKER_MS, MAX_PAUSE_MARKERS_TOTAL_MS, Segment, split_script};
 pub use transcribe::{Transcribe, TranscribeError};
 pub use voice::{
