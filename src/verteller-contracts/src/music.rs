@@ -54,6 +54,20 @@ impl Music {
     }
 }
 
+/// What a feature may know of the music model a request would run on.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MusicModelInfo {
+    /// The model's id.
+    pub id: String,
+    /// The name to show.
+    pub name: String,
+    /// Whether a request may carry a style clip.
+    pub style_clip: bool,
+    /// Whether the model embeds a clip's style and does not continue it or treat it as audio to
+    /// edit. Only then does a clip of one piece keep the next piece in the same instrument family.
+    pub clip_sets_style: bool,
+}
+
 /// Why no music was made.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MusicError {
@@ -100,6 +114,13 @@ pub trait MakeMusic: Send + Sync + 'static {
     /// while it runs takes effect when it returns. The model is loaded for the request and freed
     /// after it.
     async fn make(&self, request: MusicRequest, cancel: CancelToken) -> Result<Music, MusicError>;
+
+    /// The music model a request that names `model` (`None`: the one the person chose) would run
+    /// on, or `None` when none can be told. A feature keeps what it learns of a model by its id,
+    /// and `None` for the id it was given is a model it cannot tell apart from others.
+    fn model_info(&self, _model: Option<&str>) -> Option<MusicModelInfo> {
+        None
+    }
 }
 
 #[cfg(test)]
@@ -114,6 +135,25 @@ mod tests {
             channels: 2,
         };
         assert!((m.seconds() - 2.0).abs() < 1e-6);
+    }
+
+    struct Silent;
+
+    #[async_trait]
+    impl MakeMusic for Silent {
+        fn ready(&self) -> bool {
+            false
+        }
+
+        async fn make(&self, _: MusicRequest, _: CancelToken) -> Result<Music, MusicError> {
+            Err(MusicError::NotReady)
+        }
+    }
+
+    #[test]
+    fn a_service_that_does_not_say_which_model_it_runs_gives_none() {
+        assert_eq!(Silent.model_info(None), None);
+        assert_eq!(Silent.model_info(Some("any")), None);
     }
 
     #[test]
